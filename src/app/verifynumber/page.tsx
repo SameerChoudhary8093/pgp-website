@@ -8,7 +8,7 @@ import { supabase } from '../../lib/supabaseClient';
 import PasswordResetSuccess from './Password Reset Successfully';
 import SignUpScreen from './signup';
 
-export default function VerifyOtpScreen() {
+function VerifyOtpContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -297,5 +297,13 @@ export default function VerifyOtpScreen() {
             </div>
             {isSuccess && <PasswordResetSuccess />}
         </div>
+    );
+}
+
+export default function VerifyOtpScreen() {
+    return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+            <VerifyOtpContent />
+        </React.Suspense>
     );
 }
