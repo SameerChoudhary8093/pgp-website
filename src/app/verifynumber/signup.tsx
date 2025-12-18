@@ -129,7 +129,8 @@ export default function SignUpScreen() {
     const handleCalendarClick = () => {
         if (dobInputRef.current) {
             // showPicker() is the modern way to open date picker from JS
-            if ('showPicker' in dobInputRef.current) {
+            // @ts-ignore
+            if (typeof dobInputRef.current.showPicker === 'function') {
                 // @ts-ignore
                 dobInputRef.current.showPicker();
             } else {
