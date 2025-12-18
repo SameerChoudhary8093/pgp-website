@@ -178,11 +178,12 @@ const Navbar = () => {
           >
             {t.nav.join}
           </Link>
-          <button
+          <Link
+            href="/login"
             className="hidden lg:flex w-[118px] h-[46px] items-center justify-center border border-[#0D5229] text-[#0D5229] font-['Familjen_Grotesk'] font-semibold text-[16px] leading-[22px] tracking-[-0.3px] rounded-[8px] hover:bg-green-50 transition-colors whitespace-nowrap"
           >
             {t.nav.login}
-          </button>
+          </Link>
 
           <button
             className="lg:hidden p-2 text-gray-700 ml-auto"
@@ -203,9 +204,9 @@ const Navbar = () => {
             <Link href="/join" className="w-full py-3 bg-green-900 text-white text-center rounded font-medium">
               {t.nav.join}
             </Link>
-            <button className="w-full py-3 border border-gray-300 text-gray-700 rounded font-medium">
+            <Link href="/login" className="w-full py-3 border border-gray-300 text-gray-700 rounded font-medium text-center block">
               {t.nav.login}
-            </button>
+            </Link>
           </div>
         </div>
       )}
@@ -341,7 +342,6 @@ const JoinPageContent = () => {
     <div className="min-h-screen bg-white text-gray-800 flex flex-col items-center font-['Familjen_Grotesk'] pt-[70px] lg:pt-[92px]">
       <Navbar />
       {/* MAIN CONTENT WRAPPER */}
-      {/* Gap from Navbar: 12px */}
       <main className="w-full max-w-[1320px] px-4 lg:px-0 mt-[12px] flex flex-col items-center">
 
         {/* 1. Page Header Section */}
@@ -384,29 +384,25 @@ const JoinPageContent = () => {
           </div>
 
           {/* Right: Registration Form */}
-          {/* Layout: Width 512, Height 698, Gap 28, Padding 32, specific border/shadow */}
           <div
             className="w-full lg:w-[512px] h-auto lg:h-[698px] bg-white rounded-[8px] border border-[#E4F2EA] p-[32px] flex flex-col gap-[28px] shadow-[0px_4px_20px_0px_#0000001A]"
           >
-            {/* Form Header Section: Width 448, Height 72, Gap 12 */}
+            {/* Form Header Section */}
             <div className="w-full lg:w-[448px] h-auto lg:h-[72px] flex flex-col gap-[12px] items-center">
-              {/* Title: Width 448, Height 38, Size 32, Leading 38 */}
               <h2 className="w-full text-center text-[32px] leading-[38px] font-semibold tracking-[-0.3px] text-[#04330B] font-['Familjen_Grotesk']">
                 {t.joinPage.form.title}
               </h2>
-              {/* Subtitle: Width 380, Height 22, Size 16, Leading 22 */}
               <p className="w-full lg:w-[380px] text-center text-[16px] leading-[22px] font-semibold tracking-[-0.3px] text-[#587E67] font-['Familjen_Grotesk']">
                 {t.joinPage.form.subtitle}
               </p>
             </div>
 
-            {/* Form Content Section: Width 448, Height 534, Gap 24 */}
+            {/* Form Content Section */}
             <form
               className="w-full lg:w-[448px] flex flex-col items-center overflow-y-auto custom-noscroll"
               onSubmit={(e) => e.preventDefault()}
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              {/* Visual Fix for scrollbar hiding using standard React pattern */}
               <style dangerouslySetInnerHTML={{
                 __html: `
                   .custom-noscroll::-webkit-scrollbar {
@@ -414,10 +410,10 @@ const JoinPageContent = () => {
                   }
                 `}} />
 
-              {/* Main Section: Width 448, Height ~534 (Inputs + Gap + Checkboxes) */}
+              {/* Main Section */}
               <div className="flex flex-col w-full gap-[20px]">
 
-                {/* Input Fields Section: Width 448, Height ~464, Gap 20 */}
+                {/* Input Fields Section */}
                 <div className="flex flex-col gap-[20px] w-full">
                   {/* 1. First Name */}
                   <input
@@ -451,9 +447,8 @@ const JoinPageContent = () => {
                     />
                   </div>
 
-                  {/* 4. State & District - Side by Side with 14px gap */}
+                  {/* 4. State & District */}
                   <div className="w-full h-[46px] flex gap-[14px]">
-                    {/* State: flex-1 to verify ~217px width in 448px container */}
                     <div className="relative flex-1 h-full">
                       <select className="appearance-none w-full h-full rounded-[8px] border border-[#E4F2EA] px-[16px] py-[12px] font-semibold tracking-[-0.3px] text-[16px] bg-white text-[#587E67] outline-none cursor-pointer font-['Familjen_Grotesk']">
                         <option value="">{t.joinPage.form.state}</option>
@@ -465,7 +460,6 @@ const JoinPageContent = () => {
                       </div>
                     </div>
 
-                    {/* District: flex-1 */}
                     <div className="relative flex-1 h-full">
                       <select className="appearance-none w-full h-full rounded-[8px] border border-[#E4F2EA] px-[16px] py-[12px] font-semibold tracking-[-0.3px] text-[16px] bg-white text-[#587E67] outline-none cursor-pointer font-['Familjen_Grotesk']">
                         <option value="">{t.joinPage.form.district}</option>
@@ -493,22 +487,23 @@ const JoinPageContent = () => {
                   {/* 7. ZIP */}
                   <input
                     type="text"
-                    className="w-full h-[46px] rounded-[8px] border border-[#E4F2EA] px-[16px] py-[12px] font-semibold tracking-[-0.3px] text-[16px] placeholder-[#587E67] text-[#04330B] focus:outline-none focus:ring-1 focus:ring-green-600 outline-none font-['Familjen_Grotesk']"
+                    className="w-full h-[46px] rounded-[8px] border border-[#E4F2EA] px-[16px] py-[12px] font-semibold tracking-[-0.3px] text-[16px] placeholder-[#587E67] text-[#04330B] focus:outline-none focus:ring-1 focus:ring-green-600 outline-none font-['Familjen_Grotesk'] "
                     placeholder={t.joinPage.form.zip}
                   />
                 </div>
 
-                <div className="w-full flex flex-col gap-[12px]">
+                {/* --- CHECKBOX SECTION FIXED --- */}
+                <div className="w-full flex flex-col gap-[16px] mt-[4px]">
 
                   {/* First Checkbox Item */}
                   <label className="flex items-start gap-[12px] cursor-pointer group select-none">
-                    {/* Checkbox Container - 20x20 as requested */}
-                    <div className="relative flex items-center justify-center shrink-0 w-[20px] h-[20px] mt-[1px]">
+                    {/* Checkbox Container: Fixed 20x20 with shrink-0 and aligned to top of text */}
+                    <div className="relative flex items-center justify-center shrink-0 w-[20px] h-[20px] mt-[2px]">
                       <input
                         type="checkbox"
-                        className="peer h-full w-full appearance-none bg-white border-[2px] border-[#587E67] rounded-[4px] checked:bg-[#587E67] checked:border-[#587E67] focus:outline-none transition-all cursor-pointer"
+                        className="peer h-[20px] w-[20px] appearance-none bg-white border-[2px] border-[#587E67] rounded-[4px] checked:bg-[#587E67] checked:border-[#587E67] focus:outline-none transition-all cursor-pointer"
                       />
-                      {/* Checkmark Icon (SVG) - Scaled to 14px for 20px box */}
+                      {/* Checkmark Icon */}
                       <svg
                         className="absolute w-[14px] h-[14px] text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity duration-200"
                         xmlns="http://www.w3.org/2000/svg"
@@ -530,13 +525,13 @@ const JoinPageContent = () => {
 
                   {/* Second Checkbox Item */}
                   <label className="flex items-start gap-[12px] cursor-pointer group select-none">
-                    {/* Checkbox Container - 20x20 as requested */}
-                    <div className="relative flex items-center justify-center shrink-0 w-[20px] h-[20px] mt-[1px]">
+                    {/* Checkbox Container: Fixed 20x20 with shrink-0 and aligned to top of text */}
+                    <div className="relative flex items-center justify-center shrink-0 w-[20px] h-[20px] mt-[2px]">
                       <input
                         type="checkbox"
-                        className="peer h-full w-full appearance-none bg-white border-[2px] border-[#587E67] rounded-[4px] checked:bg-[#587E67] checked:border-[#587E67] focus:outline-none transition-all cursor-pointer"
+                        className="peer h-[20px] w-[20px] appearance-none bg-white border-[2px] border-[#587E67] rounded-[4px] checked:bg-[#587E67] checked:border-[#587E67] focus:outline-none transition-all cursor-pointer"
                       />
-                      {/* Checkmark Icon (SVG) */}
+                      {/* Checkmark Icon */}
                       <svg
                         className="absolute w-[14px] h-[14px] text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity duration-200"
                         xmlns="http://www.w3.org/2000/svg"

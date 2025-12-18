@@ -1,307 +1,217 @@
-import React from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import Link from "next/link";
-import { 
-  Copy, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Linkedin, 
-  Facebook, 
-  Instagram, 
+import {
+  Copy,
+  MapPin,
+  Phone,
+  Mail,
+  Linkedin,
+  Facebook,
+  Instagram,
   X, // Twitter icon
   User,
   Menu
 } from 'lucide-react';
+import { Navbar } from '../../components/Navbar';
+import { Footer } from '../../components/Footer';
+import { LanguageProvider, useLanguage } from '../../components/LanguageContext';
 
 // --- Types ---
 interface Member {
   id: string;
-  name: string;
-  role: string;
+  name: { en: string; hi: string };
+  role: 'Worker' | 'Member';
   avatar: string; // URL
 }
 
 // --- Mock Data ---
+// Names translated for demonstration
 const currentUser = {
-  name: "Dr. Sudhanshu Sharma",
+  name: { en: "Dr. Sudhanshu Sharma", hi: "डॉ. सुधांशु शर्मा" },
   id: "PGP-MEM-0639",
-  role: "Worker",
-  ward: "Ward 10 – Bani Park, Jaipur",
-  avatar: "/Shudhanshu.svg" // Placeholder
+  role: 'Worker' as const,
+  ward: { en: "Ward 10 – Bani Park, Jaipur", hi: "वार्ड 10 - बनी पार्क, जयपुर" },
+  avatar: "/Shudhanshu.svg"
 };
 
 const recruitsList: Member[] = [
-  { id: '1', name: 'Vikram Chauhan', role: 'Member', avatar: 'https://i.pravatar.cc/150?u=vikram' },
-  { id: '2', name: 'Misthi Sharma', role: 'Member', avatar: 'https://i.pravatar.cc/150?u=misthi' },
-  { id: '3', name: 'Vikrant Singh', role: 'Member', avatar: 'https://i.pravatar.cc/150?u=vikrant' },
-  { id: '4', name: 'Shreya Ghosal', role: 'Member', avatar: 'https://i.pravatar.cc/150?u=shreya' },
-  { id: '5', name: 'Raghav Mehta', role: 'Member', avatar: 'https://i.pravatar.cc/150?u=raghav' },
-  { id: '6', name: 'Devesh Yadav', role: 'Member', avatar: 'https://i.pravatar.cc/150?u=devesh' },
-  { id: '7', name: 'Rohit Chauhan', role: 'Member', avatar: 'https://i.pravatar.cc/150?u=rohit' },
-  { id: '8', name: 'Amit Bansal', role: 'Member', avatar: 'https://i.pravatar.cc/150?u=amit' },
-  { id: '9', name: 'Rajat Yadav', role: 'Member', avatar: 'https://i.pravatar.cc/150?u=rajat' },
-  { id: '10', name: 'Sushma Singh', role: 'Member', avatar: 'https://i.pravatar.cc/150?u=sushma' },
-  { id: '11', name: 'Shobha Jha', role: 'Member', avatar: 'https://i.pravatar.cc/150?u=shobha' },
-  { id: '12', name: 'Mahima Singh', role: 'Member', avatar: 'https://i.pravatar.cc/150?u=mahima' },
+  { id: '1', name: { en: 'Vikram Chauhan', hi: 'विक्रम चौहान' }, role: 'Member', avatar: 'https://i.pravatar.cc/150?u=vikram' },
+  { id: '2', name: { en: 'Misthi Sharma', hi: 'मिष्टी शर्मा' }, role: 'Member', avatar: 'https://i.pravatar.cc/150?u=misthi' },
+  { id: '3', name: { en: 'Vikrant Singh', hi: 'विक्रांत सिंह' }, role: 'Member', avatar: 'https://i.pravatar.cc/150?u=vikrant' },
+  { id: '4', name: { en: 'Shreya Ghosal', hi: 'श्रेया घोषाल' }, role: 'Member', avatar: 'https://i.pravatar.cc/150?u=shreya' },
+  { id: '5', name: { en: 'Raghav Mehta', hi: 'राघव मेहता' }, role: 'Member', avatar: 'https://i.pravatar.cc/150?u=raghav' },
+  { id: '6', name: { en: 'Devesh Yadav', hi: 'देवेश यादव' }, role: 'Member', avatar: 'https://i.pravatar.cc/150?u=devesh' },
+  { id: '7', name: { en: 'Rohit Chauhan', hi: 'रोहित चौहान' }, role: 'Member', avatar: 'https://i.pravatar.cc/150?u=rohit' },
+  { id: '8', name: { en: 'Amit Bansal', hi: 'अमित बंसल' }, role: 'Member', avatar: 'https://i.pravatar.cc/150?u=amit' },
+  { id: '9', name: { en: 'Rajat Yadav', hi: 'रजत यादव' }, role: 'Member', avatar: 'https://i.pravatar.cc/150?u=rajat' },
+  { id: '10', name: { en: 'Sushma Singh', hi: 'सुषमा सिंह' }, role: 'Member', avatar: 'https://i.pravatar.cc/150?u=sushma' },
+  { id: '11', name: { en: 'Shobha Jha', hi: 'शोभा झा' }, role: 'Member', avatar: 'https://i.pravatar.cc/150?u=shobha' },
+  { id: '12', name: { en: 'Mahima Singh', hi: 'महिमा सिंह' }, role: 'Member', avatar: 'https://i.pravatar.cc/150?u=mahima' },
 ];
 
 // --- Components ---
 
-const Header = () => {
-  return (
-    <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
-      {/* Logo Area */}
-      <div className="flex items-center gap-2">
-        {/* Placeholder for PGP Logo */}
-        <div className="flex flex-col items-center leading-none">
-           <img src="/PGPlogo.svg" alt="PGP Logo" className="w-40 h-25"/>
-        </div>
-      </div>
-
-      {/* Nav Links */}
-      <nav className="hidden md:flex gap-8">
-        <a href="#" className="px-4 py-2 text-sm font-medium text-green-800 bg-green-50 rounded-md">Dashboard</a>
-        <a href="#" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-green-700">Election</a>
-      </nav>
-
-      {/* Controls */}
-      <div className="flex items-center gap-4">
-  {/* Language switch */}
-  <div className="flex items-center border border-gray-300 rounded overflow-hidden">
-    <button className="px-3 py-1 text-sm text-gray-500 hover:bg-gray-100">हि</button>
-    <div className="w-px h-6 bg-gray-300"></div>
-    <button className="px-3 py-1 text-sm font-bold bg-green-50 text-green-800">En</button>
-  </div>
-
-  {/* ✅ Join Now button */}
-  <Link
-    href="/join"
-    className="px-4 py-2 text-sm font-semibold rounded-md bg-green-600 text-white hover:bg-green-700 transition"
-  >
-    Join Now
-  </Link>
-
-  {/* User icon */}
-  <div className="p-2 border border-gray-300 rounded-full cursor-pointer hover:bg-gray-50">
-    <User className="w-5 h-5 text-gray-600" />
-  </div>
-</div>
-    </header>
-  );
-};
-
 const MemberIdCard = () => {
+  const { t, language } = useLanguage();
+  const currentLang = language as 'en' | 'hi'; // ensuring type safety
+
+  const roleLabel = currentUser.role === 'Worker' ? t.dashboard.roles.worker : t.dashboard.roles.member;
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-full">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Member Identification Card</h2>
-      
+    <div className="w-full lg:w-[388px] h-auto lg:h-[419px] bg-white rounded-[8px] p-[24px] pt-[20px] flex flex-col gap-[16px] border border-[#B9D3C4] shadow-[0px_4px_20px_0px_#0000001A]">
+      <h2 className="text-[20px] font-bold text-[#04330B] font-['Familjen_Grotesk'] leading-[26px]">
+        {t.dashboard.memberCardTitle}
+      </h2>
+
       {/* Photo */}
-      <div className="w-full h-48 mb-6 overflow-hidden rounded-lg bg-gray-100">
-        <img 
-          src={currentUser.avatar} 
-          alt={currentUser.name} 
+      <div className="w-full h-[200px] overflow-hidden rounded-[8px] bg-gray-100">
+        <img
+          src={currentUser.avatar}
+          alt={currentUser.name[currentLang]}
           className="w-full h-full object-cover object-top"
         />
       </div>
 
       {/* Details Grid */}
-      <div className="grid grid-cols-[1fr_2fr] gap-y-3 text-sm">
-        <span className="text-gray-500 font-medium">Name</span>
-        <span className="font-bold text-gray-800 text-right">{currentUser.name}</span>
-
-        <span className="text-gray-500 font-medium">Membership ID</span>
-        <span className="font-bold text-gray-800 text-right">{currentUser.id}</span>
-
-        <span className="text-gray-500 font-medium">Role:</span>
-        <span className="font-bold text-gray-800 text-right">{currentUser.role}</span>
-
-        <span className="text-gray-500 font-medium">Ward:</span>
-        <span className="font-bold text-gray-800 text-right">{currentUser.ward}</span>
+      <div className="flex flex-col gap-[12px] text-[14px]">
+        <div className="flex justify-between items-center h-[22px]">
+          <span className="text-[#587E67] font-semibold font-['Familjen_Grotesk']">{t.dashboard.name}</span>
+          <span className="text-[#04330B] font-bold font-['Familjen_Grotesk'] text-right">{currentUser.name[currentLang]}</span>
+        </div>
+        <div className="flex justify-between items-center h-[22px]">
+          <span className="text-[#587E67] font-semibold font-['Familjen_Grotesk']">{t.dashboard.membershipId}</span>
+          <span className="text-[#04330B] font-bold font-['Familjen_Grotesk'] text-right">{currentUser.id}</span>
+        </div>
+        <div className="flex justify-between items-center h-[22px]">
+          <span className="text-[#587E67] font-semibold font-['Familjen_Grotesk']">{t.dashboard.role}</span>
+          <span className="text-[#04330B] font-bold font-['Familjen_Grotesk'] text-right">{roleLabel}</span>
+        </div>
+        <div className="flex justify-between items-start h-auto">
+          <span className="text-[#587E67] font-semibold font-['Familjen_Grotesk'] shrink-0">{t.dashboard.ward}</span>
+          <span className="text-[#04330B] font-bold font-['Familjen_Grotesk'] text-right break-words max-w-[200px]">{currentUser.ward[currentLang]}</span>
+        </div>
       </div>
     </div>
   );
 };
 
 const RecruitsPanel = () => {
+  const { t, language } = useLanguage();
+  const currentLang = language as 'en' | 'hi';
+
+  const handleCopy = () => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText("ADMINCODE");
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="w-full lg:w-[892px] h-auto lg:h-[420px] bg-white rounded-[8px] p-[24px] pt-[20px] pb-[20px] flex flex-col gap-[20px] border border-[#B9D3C4] shadow-[0px_4px_20px_0px_#0000001A]">
       {/* Top Section: Header & QR */}
-      <div className="flex flex-col md:flex-row justify-between items-start mb-6">
-        <div className="w-full md:w-3/4">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Recruits</h2>
-          
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-gray-600">Referral Code:</span>
-            <span className="font-bold text-gray-900">ADMINCODE</span>
-            <button className="text-gray-400 hover:text-gray-600">
-              <Copy className="w-4 h-4" />
+      <div className="w-full flex flex-col md:flex-row justify-between items-start">
+        <div className="w-full md:w-3/4 flex flex-col gap-[12px]">
+          <h2 className="text-[24px] font-bold text-[#04330B] font-['Familjen_Grotesk'] leading-[30px]">{t.dashboard.recruitsTitle}</h2>
+
+          <div className="flex items-center gap-2 h-[22px]">
+            <span className="text-[#587E67] font-semibold font-['Familjen_Grotesk'] text-[16px]">{t.dashboard.referralCode}</span>
+            <span className="text-[#04330B] font-bold font-['Familjen_Grotesk'] text-[16px]">ADMINCODE</span>
+            <button
+              onClick={handleCopy}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              title={t.dashboard.copy}
+            >
+              <img src="/CopiedIcon.svg" alt="Copy" className="w-[18px] h-[18px]" />
             </button>
           </div>
 
-          <p className="text-sm text-gray-600 mb-2">
-            Senior Members target 5 workers. Workers Target 20 members
+          <p className="text-[14px] text-[#587E67] font-semibold font-['Familjen_Grotesk'] leading-[18px]">
+            {t.dashboard.target}
           </p>
 
           {/* Progress Bar */}
-          <div className="relative w-full h-8 bg-green-100 rounded-md overflow-hidden flex items-center">
-            <div className="absolute left-0 top-0 h-full bg-green-600 w-[57%]"></div>
-            <span className="relative z-10 pl-3 text-sm font-bold text-white">12/21</span>
+          <div className="relative w-full max-w-[500px] h-[32px] bg-[#C6E0D1] rounded-[8px] overflow-hidden flex items-center">
+            <div className="absolute left-0 top-0 h-full bg-[#65A27F] w-[57%]"></div>
+            <span className="relative z-10 pl-3 text-[14px] font-bold text-white font-['Familjen_Grotesk']">12/21</span>
           </div>
         </div>
 
         {/* QR Code Placeholder */}
-        <div className="mt-4 md:mt-0 md:ml-4 flex-shrink-0">
-            {/* Using a generic QR code image for visual fidelity */}
-           <img 
-             src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=Example" 
-             alt="QR Code" 
-             className="w-24 h-24 border border-gray-200" 
-           />
+        <div className="mt-4 md:mt-0 flex-shrink-0 w-[134px] h-[134px] p-[8px] opacity-80 border border-dashed border-[#0D5229]">
+          <img
+            src="https://api.qrserver.com/v1/create-qr-code/?size=118x118&data=Example"
+            alt="QR Code"
+            className="w-[118px] h-[118px]"
+          />
         </div>
       </div>
 
       {/* Recruited Members Grid */}
-      <div>
-        <h3 className="text-sm font-bold text-gray-800 mb-4">Recruited Members</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {recruitsList.map((recruit) => (
-            <div key={recruit.id} className="flex items-center gap-3">
-              <img 
-                src={recruit.avatar} 
-                alt={recruit.name} 
-                className="w-10 h-10 rounded-lg object-cover bg-gray-200"
-              />
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-gray-900">{recruit.name}</span>
-                <span className="text-xs text-gray-500">{recruit.role}</span>
+      <div className="w-full flex flex-col gap-[16px]">
+        <h3 className="text-[16px] font-bold text-[#04330B] font-['Familjen_Grotesk']">{t.dashboard.recruitedMembers}</h3>
+        <div className="w-full h-[180px] overflow-y-auto pr-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[24px]">
+          {recruitsList.map((recruit) => {
+            const recruitRoleLabel = recruit.role === 'Worker' ? t.dashboard.roles.worker : t.dashboard.roles.member;
+            return (
+              <div key={recruit.id} className="flex items-center gap-[12px]">
+                <img
+                  src={recruit.avatar}
+                  alt={recruit.name[currentLang]}
+                  className="w-[40px] h-[40px] rounded-[8px] object-cover bg-gray-200"
+                />
+                <div className="flex flex-col">
+                  <span className="font-['Familjen_Grotesk'] font-semibold text-[16px] leading-[22px] tracking-[-0.3px] text-[#04330B]">{recruit.name[currentLang]}</span>
+                  <span className="font-['Familjen_Grotesk'] font-semibold text-[16px] leading-[22px] tracking-[-0.3px] text-[#587E67]">{recruitRoleLabel}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
   );
 };
 
-const Footer = () => {
+// --- Main Layout Content ---
+const DashboardContent = () => {
+  const { t } = useLanguage();
+
+  const dashboardLinks = [
+    { name: t.nav.dashboard, href: '/dashboard' },
+    { name: t.nav.election, href: '/election' }
+  ];
+
   return (
-    <footer className="mt-12 bg-white pt-12 pb-6 px-6">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-        
-        {/* Column 1: Logo & Socials */}
-        <div className="space-y-6">
-            <div className="flex flex-col items-start leading-none">
-              <img src="/PGPlogo.svg" alt="PGP Logo" className="w-40 h-25" />
-            </div>
-            
-            <div>
-              <h4 className="font-bold text-lg mb-4">Follow Us</h4>
-              <div className="flex gap-3">
-                <SocialIcon Icon={Linkedin} />
-                <SocialIcon Icon={Facebook} />
-                <SocialIcon Icon={Instagram} />
-                <SocialIcon Icon={X} />
-              </div>
-            </div>
-        </div>
+    <div className="min-h-screen bg-white font-sans text-gray-800 pt-[104px] overflow-x-hidden">
 
-        {/* Column 2: Useful Links */}
-        <div>
-          <h4 className="font-bold text-lg mb-4 text-gray-900">Useful Links</h4>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <FooterLink text="Home" />
-            <FooterLink text="About" />
-            <FooterLink text="Constitution" />
-            <FooterLink text="Join Us" />
-          </ul>
-        </div>
+      {/* Navbar with showProfileButton=true and isDashboard=true */}
+      <Navbar links={dashboardLinks} showAuthButtons={false} showProfileButton={true} isDashboard={true} />
 
-        {/* Column 3: Additional Links */}
-        <div>
-          <h4 className="font-bold text-lg mb-4 text-gray-900">Additional Links</h4>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <FooterLink text="Audit Report and Information About Donation" />
-            <FooterLink text="ECI Disclosure" />
-            <FooterLink text="Declaration about criminal antecedents of candidates set up by the party" />
-          </ul>
-        </div>
+      <main className="w-full max-w-[1320px] mx-auto flex flex-col items-center">
+        {/* Main Content Container - 1320x420, Gap 40px */}
+        <div className="w-full flex flex-col lg:flex-row gap-[40px] justify-center px-4 lg:px-0">
 
-        {/* Column 4: Contact Us */}
-        <div>
-          <h4 className="font-bold text-lg mb-4 text-gray-900">Contact Us</h4>
-          <div className="space-y-4">
-            <div className="flex gap-3 items-start">
-              <div className="p-2 border border-gray-200 rounded text-green-800">
-                 <MapPin size={20} />
-              </div>
-              <p className="text-sm text-gray-600 font-medium leading-relaxed">
-                Ham Badlenge Bhawan, 02 Mission Compound,<br/>
-                Ajmer Puliya, Jaipur, Rajasthan
-              </p>
-            </div>
+          {/* Left Column: Member Card (388px) */}
+          <MemberIdCard />
 
-            <div className="flex gap-3 items-start">
-              <div className="p-2 border border-gray-200 rounded text-green-800">
-                 <Phone size={20} />
-              </div>
-              <div className="text-sm text-gray-600 font-medium">
-                <p>9521627701</p>
-                <p>9950008786</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3 items-start">
-              <div className="p-2 border border-gray-200 rounded text-green-800">
-                 <Mail size={20} />
-              </div>
-              <p className="text-sm text-gray-600 font-medium">joinus@peoplesgreen.org</p>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </footer>
-  );
-};
-
-// Helper Components for Footer
-const SocialIcon = ({ Icon }: { Icon: any }) => (
-  <a href="#" className="p-2 border border-gray-200 rounded-md hover:bg-gray-50 text-green-900">
-    <Icon size={18} />
-  </a>
-);
-
-const FooterLink = ({ text }: { text: string }) => (
-  <li>
-    <a href="#" className="hover:text-green-700 font-medium">{text}</a>
-  </li>
-);
-
-
-// --- Main Layout ---
-
-export default function Dashboard() {
-  return (
-    <div className="min-h-screen bg-white font-sans text-gray-800">
-      <Header />
-      
-      <main className="max-w-[1400px] mx-auto p-6 md:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Column: Member Card */}
-          <div className="lg:col-span-1">
-            <MemberIdCard />
-          </div>
-
-          {/* Right Column: Recruits Panel */}
-          <div className="lg:col-span-2">
-            <RecruitsPanel />
-          </div>
+          {/* Right Column: Recruits Panel (892px) */}
+          <RecruitsPanel />
 
         </div>
+
+        {/* Removed the empty spacer div as requested */}
       </main>
 
       <Footer />
     </div>
+  );
+};
+
+export default function Dashboard() {
+  return (
+    <LanguageProvider>
+      <DashboardContent />
+    </LanguageProvider>
   );
 }

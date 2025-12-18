@@ -238,11 +238,12 @@ const Navbar = () => {
           >
             {t.nav.join}
           </Link>
-          <button
+          <Link
+            href="/login"
             className="hidden lg:flex w-[118px] h-[46px] items-center justify-center border border-[#0D5229] text-[#0D5229] font-['Familjen_Grotesk'] font-semibold text-[16px] leading-[22px] tracking-[-0.3px] rounded-[8px] hover:bg-green-50 transition-colors whitespace-nowrap"
           >
             {t.nav.login}
-          </button>
+          </Link>
 
           <button
             className="lg:hidden p-2 text-gray-700 ml-auto"
@@ -263,9 +264,9 @@ const Navbar = () => {
             <Link href="/join" className="w-full py-3 bg-green-900 text-white text-center rounded font-medium">
               {t.nav.join}
             </Link>
-            <button className="w-full py-3 border border-gray-300 text-gray-700 rounded font-medium">
+            <Link href="/login" className="w-full py-3 border border-gray-300 text-gray-700 rounded font-medium text-center block">
               {t.nav.login}
-            </button>
+            </Link>
           </div>
         </div>
       )}
