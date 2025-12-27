@@ -83,6 +83,70 @@ Check out a few resources that may come in handy when working with NestJS:
 - To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
 - Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
 
+## API Endpoints
+
+### Users
+| Method | Endpoint | Description | Auth | Body/Query |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/users/register` | Register a new user | No | `RegisterDto`: `{ name, email?, phone, address, gpId?, wardId?, localUnitId?, password, referralCode?, authUserId? }` |
+| `GET` | `/users/me/summary` | Get current user's summary | Yes | - |
+| `PATCH` | `/users/me` | Update current user profile | Yes | `UpdateProfileDto`: `{ photoUrl? }` |
+| `GET` | `/users/me/recruitment-progress` | Get current user's recruitment progress | Yes | - |
+| `POST` | `/users/me/photo` | Upload profile photo | Yes | FormData `file` |
+| `GET` | `/users/:id/recruits` | Get recruits of a user | No | Query: `take` |
+| `GET` | `/users/:id/summary` | Get user summary | No | - |
+| `GET` | `/users/:id/recruitment-progress` | Get user recruitment progress | No | - |
+| `GET` | `/users/leaderboard` | Get leaderboard | No | Query: `take` |
+| `GET` | `/users/admin/users/search` | Search users | Admin | Query: `q`, `take` |
+| `POST` | `/users/admin/users/:id/role` | Update user role | Admin | `UpdateRoleDto`: `{ role, actorUserId, reason }` |
+
+### Admin Users
+| Method | Endpoint | Description | Auth | Body/Query |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/admin/users/:id/promote-to-ppc` | Promote user to PPC | Admin | `{ actorUserId, reason }` |
+| `POST` | `/admin/users/:id/promote-to-ssp` | Promote user to SSP | Admin | `{ actorUserId, reason }` |
+
+### Audit
+| Method | Endpoint | Description | Auth | Body/Query |
+| :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/audit/logs` | List audit logs | No | Query: `limit` |
+
+### Committees
+| Method | Endpoint | Description | Auth | Body/Query |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/admin/committees` | Create committee | Admin | `{ name, localUnitId, type, actorUserId, reason? }` |
+| `POST` | `/admin/committees/:id/members` | Add member to committee | Admin | `{ userId, role, isPresident?, actorUserId, reason? }` |
+| `GET` | `/cwc/my-team` | View CWC team | User | - |
+
+### Elections
+| Method | Endpoint | Description | Auth | Body/Query |
+| :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/elections` | List active elections | No | - |
+| `GET` | `/elections/my-ballot` | Get my ballot | Yes | - |
+| `GET` | `/elections/:id` | Get election details | No | - |
+| `POST` | `/elections/:id/vote` | Vote in an election | Yes | `VoteDto`: `{ candidateUserIds: number[] }` |
+| `POST` | `/admin/elections` | Create election | Admin | `CreateElectionDto`: `{ councilLevel, position?, reason, actorUserId? }` |
+| `POST` | `/admin/elections/:id/candidates` | Add candidate | Admin | `AddCandidateDto`: `{ userId, reason, actorUserId }` |
+| `POST` | `/admin/elections/:id/close` | Close election | Admin | `CloseElectionDto`: `{ reason, actorUserId }` |
+| `POST` | `/admin/elections/apc` | Create APC elections | Admin | `CreateApcElectionsDto`: `{ vidhansabhaId, reason, actorUserId }` |
+| `GET` | `/admin/elections/:id/results` | Get election results | Admin | - |
+
+### Geo & Locations
+| Method | Endpoint | Description | Auth | Body/Query |
+| :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/geo/loksabhas` | List Loksabhas | No | - |
+| `GET` | `/geo/loksabhas/:id/vidhansabhas` | List Vidhansabhas in Loksabha | No | - |
+| `GET` | `/geo/vidhansabhas/:id/local-units` | List Local Units in Vidhansabha | No | Query: `type` |
+| `GET` | `/geo/qa` | Quality Assurance counts | No | - |
+| `GET` | `/locations/districts` | List Districts | No | - |
+| `GET` | `/locations/districts/:districtId/gps` | List GPs by District | No | - |
+| `GET` | `/locations/gps` | List all GPs | No | - |
+| `GET` | `/locations/gps/:gpId/wards` | List Wards by GP | No | - |
+| `GET` | `/locations/loksabhas` | List Loksabhas | No | - |
+| `GET` | `/locations/loksabhas/:id/vidhansabhas` | List Vidhansabhas | No | - |
+| `GET` | `/locations/vidhansabhas/:id/local-units` | List Local Units | No | - |
+| `GET` | `/locations/vidhansabhas/:id/wards` | List Wards in Local Units | No | - |
+
 ## Support
 
 Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
