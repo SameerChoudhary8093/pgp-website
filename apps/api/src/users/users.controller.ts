@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Req, UseGuards, Patch, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Req, UseGuards, Patch, UploadedFile, UseInterceptors, HttpException, HttpStatus } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from '../auth/auth.guard';
@@ -13,11 +13,27 @@ import { Type } from 'class-transformer';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.usersService.register(dto);
+  }
+
+  @Post('login')
+  async login(@Body() dto: any) {
+    console.log('Login attempt for:', dto.phone);
+    try {
+      const result = await this.usersService.login(dto.phone, dto.password);
+      console.log('Login successful for:', dto.phone);
+      return result;
+    } catch (error: any) {
+      console.error('Login error details:', error);
+      throw new HttpException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error.message || 'Internal Server Error',
+      }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   // Authenticated: current user's summary

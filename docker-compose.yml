@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  # The Only Service we need on the VPS
+  api:
+    build: ./apps/api
+    restart: always
+    ports:
+      - "3002:3002" # Expose API directly
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      # Your Supabase Config
+      - DATABASE_URL=postgresql://postgres:pgp%40123jaipur@db.jgtseacyfwgbpltvlxno.supabase.co:5432/postgres
+      - DIRECT_URL=postgresql://postgres:pgp%40123jaipur@db.jgtseacyfwgbpltvlxno.supabase.co:5432/postgres
+      - SUPABASE_JWKS_URL=https://jgtseacyfwgbpltvlxno.supabase.co/auth/v1/jwks
+      - JWT_SECRET=replace-with-strong-secret
+      # CRITICAL: Allow your Vercel Frontend to talk to this Backend
+      - CORS_ORIGIN=https://pgp-website.vercel.app

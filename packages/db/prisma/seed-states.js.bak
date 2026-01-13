@@ -1,0 +1,69 @@
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+async function main() {
+    console.log('Seeding Comprehensive State Hierarchy for Frontend Map...');
+
+    // These match STATE_LOKSABHA_MAP in apps/web/src/app/join/location_utils.ts
+    const stateMap = {
+        "Rajasthan": ["Jaipur", "Jodhpur", "Udaipur", "Kota", "Bikaner"],
+        "Uttar Pradesh": ["Agra", "Aligarh", "Allahabad", "Amethi", "Azamgarh", "Bareilly", "Ghaziabad", "Gorakhpur", "Lucknow", "Mathura", "Meerut", "Noida", "Varanasi", "Kanpur"],
+        "Madhya Pradesh": ["Bhopal", "Gwalior", "Indore", "Jabalpur", "Ujjain"],
+        "Delhi": ["Chandni Chowk", "East Delhi", "New Delhi", "North East Delhi", "North West Delhi", "South Delhi", "West Delhi"],
+        "Maharashtra": ["Mumbai North", "Mumbai South", "Nagpur", "Nashik", "Pune", "Thane"]
+    };
+
+    for (const [state, loksabhas] of Object.entries(stateMap)) {
+        console.log(`Processing state: ${state}`);
+        for (const lName of loksabhas) {
+            // Upsert Loksabha
+            const loksabha = await prisma.loksabha.upsert({
+                where: { name: lName },
+                update: {},
+                create: { name: lName },
+            });
+            console.log(`  Loksabha: ${loksabha.name}`);
+
+            // Generate sample Vidhansabhas (2-3 per Loksabha)
+            const vidhansabhas = [
+                `${lName} North`,
+                `${lName} South`,
+                `${lName} Central`
+            ];
+
+            for (const vName of vidhansabhas) {
+                const vidhansabha = await prisma.vidhansabha.upsert({
+                    where: { loksabhaId_name: { loksabhaId: loksabha.id, name: vName } },
+                    update: {},
+                    create: { name: vName, loksabhaId: loksabha.id },
+                });
+                // console.log(`    -> Vidhansabha: ${vidhansabha.name}`);
+
+                // 3. Seed LocalUnits (Wards) for each Vidhansabha (3 Wards)
+                for (let i = 1; i <= 3; i++) {
+                    const wardName = `Ward ${i}`;
+                    await prisma.localUnit.upsert({
+                        where: { vidhansabhaId_name_type: { vidhansabhaId: vidhansabha.id, name: wardName, type: 'Ward' } },
+                        update: {},
+                        create: {
+                            name: wardName,
+                            type: 'Ward',
+                            vidhansabhaId: vidhansabha.id
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    console.log('Seeding complete.');
+}
+
+main()
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });

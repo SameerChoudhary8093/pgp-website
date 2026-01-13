@@ -1,10 +1,12 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import bcrypt from 'bcryptjs';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AuditService } from '../audit/audit.service';
 import { Prisma } from '@prisma/client';
+import * as fs from 'fs';
+import * as path from 'path';
 
 function randomReferralCode(length = 8) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -15,11 +17,24 @@ function randomReferralCode(length = 8) {
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService, private audit: AuditService) {}
+  private readonly logger = new Logger(UsersService.name);
+  constructor(private prisma: PrismaService, private audit: AuditService) { }
 
   async register(dto: RegisterDto) {
+    // Normalize phone: keep last 10 digits
+    const searchPhone = dto.phone.replace(/[^0-9]/g, '').slice(-10);
+
     // Ensure phone is unique
-    const existing = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
+    const existing = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { phone: dto.phone },
+          { phone: searchPhone },
+          { phone: `0${searchPhone}` },
+          { phone: `+91${searchPhone}` },
+        ]
+      }
+    });
     if (existing) throw new BadRequestException('Phone already registered');
 
     // Validate location
@@ -81,12 +96,52 @@ export class UsersService {
     return user;
   }
 
+  async login(phone: string, plain: string) {
+    if (!phone || !plain) throw new BadRequestException('Phone and password required');
+
+    // Normalize phone: strip +91, strip lead 0, keep last 10 digits
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    const searchPhone = cleanPhone.length > 10 ? cleanPhone.slice(-10) : cleanPhone;
+
+    // Try finding by exact match or by common variations (with lead 0, with +91)
+    const user = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { phone: phone },                          // Exact
+          { phone: searchPhone },                    // 10 digits
+          { phone: `0${searchPhone}` },               // Leading 0
+          { phone: `+91${searchPhone}` },             // With +91
+        ]
+      }
+    });
+
+    if (!user) {
+      this.logger.warn(`Login failed: User not found for phone '${phone}' (search queries: ${searchPhone})`);
+      throw new BadRequestException('Invalid credentials - User not found');
+    }
+
+    // Check password
+    if (user.passwordHash) {
+      const match = await bcrypt.compare(plain, user.passwordHash);
+      if (!match) {
+        this.logger.warn(`Login failed: Password mismatch for user ${user.id} (${user.phone})`);
+        throw new BadRequestException('Invalid credentials - Password mismatch');
+      }
+    } else {
+      this.logger.warn(`Login failed: User ${user.id} has no password hash`);
+      // If no password hash (legacy user?), fail
+      throw new BadRequestException('Invalid credentials - No password set for this user');
+    }
+
+    return { id: user.id, name: user.name };
+  }
+
   async recruits(userId: number, take = 50) {
     const recruits = await this.prisma.user.findMany({
       where: { referredByUserId: userId },
       orderBy: { id: 'desc' },
       take,
-      select: { id: true, name: true, phone: true, createdAt: true },
+      select: { id: true, name: true, phone: true, createdAt: true, photoUrl: true },
     });
     const total = await this.prisma.user.count({ where: { referredByUserId: userId } });
     return { total, recruits };
@@ -97,32 +152,107 @@ export class UsersService {
       this.prisma.user.count({ where: { referredByUserId: userId } }),
       this.prisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
     ]);
-    const role = user?.role ?? null;
-    const hasTarget = role === 'CWCPresident' || role === 'CWCMember' || role === 'ExtendedMember';
-    const target = hasTarget ? 20 : 0;
-    const remaining = target > 0 ? Math.max(target - total, 0) : 0;
-    return { role, total: hasTarget ? total : 0, target, remaining };
+    const role = user?.role ?? 'Member';
+
+    let target = 0;
+    // "Senior Members target 5 workers"
+    if (['CWCPresident', 'CWCMember', 'ExtendedMember'].includes(role)) {
+      target = 5;
+    }
+    // "Workers/Members Target 21 members" (updated from 20)
+    else {
+      target = 21;
+    }
+
+    const remaining = Math.max(target - total, 0);
+    return { role, total, target, remaining };
   }
 
   async summary(userId: number) {
-    const user = await this.prisma.user.findUnique({
+    if (!userId || Number.isNaN(userId)) {
+      throw new BadRequestException('Invalid user id for summary');
+    }
+
+    // Some environments have an incomplete DB (missing Ward/LocalUnit/etc tables).
+    // Prisma will throw P2021 for missing tables if we select relations.
+    // To keep the dashboard unblocked, fetch scalar fields first, then best-effort relations.
+    const baseUser = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
         name: true,
         phone: true,
         role: true,
-        ward: { select: { id: true, wardNumber: true, gp: { select: { id: true, name: true } } } },
-        localUnit: { select: { id: true, name: true, type: true, vidhansabha: { select: { id: true, name: true, loksabha: { select: { id: true, name: true } } } } } },
         referralCode: true,
         memberId: true,
         photoUrl: true,
+        wardId: true,
+        localUnitId: true,
       },
     });
-    if (!user) throw new BadRequestException('User not found');
+
+    if (!baseUser) throw new BadRequestException('User not found');
+
+    let ward: any = null;
+    if (baseUser.wardId) {
+      try {
+        ward = await this.prisma.ward.findUnique({
+          where: { id: baseUser.wardId },
+          select: { id: true, wardNumber: true, gp: { select: { id: true, name: true } } },
+        });
+      } catch {
+        ward = null;
+      }
+    }
+
+    let localUnit: any = null;
+    if (baseUser.localUnitId) {
+      try {
+        localUnit = await this.prisma.localUnit.findUnique({
+          where: { id: baseUser.localUnitId },
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            vidhansabha: {
+              select: {
+                id: true,
+                name: true,
+                loksabha: { select: { id: true, name: true } },
+              },
+            },
+          },
+        });
+      } catch {
+        localUnit = null;
+      }
+    }
+
+    const user = {
+      id: baseUser.id,
+      name: baseUser.name,
+      phone: baseUser.phone,
+      role: baseUser.role,
+      referralCode: baseUser.referralCode,
+      memberId: baseUser.memberId,
+      photoUrl: baseUser.photoUrl,
+      ward,
+      localUnit,
+    };
 
     const recruitsCount = await this.prisma.user.count({ where: { referredByUserId: userId } });
-    const votesCast = await this.prisma.vote.count({ where: { voterUserId: userId } });
+
+    // votesCast is non‑critical for the dashboard; if the Vote model/table is not
+    // present or any error occurs here, just default to 0 instead of throwing 500.
+    let votesCast = 0;
+    try {
+      const prismaAny = this.prisma as any;
+      if (prismaAny.vote && typeof prismaAny.vote.count === 'function') {
+        votesCast = await prismaAny.vote.count({ where: { voterUserId: userId } });
+      }
+    } catch {
+      votesCast = 0;
+    }
 
     return { user, recruitsCount, votesCast };
   }
@@ -166,7 +296,41 @@ export class UsersService {
     if (file.size > 2 * 1024 * 1024) throw new BadRequestException('Max file size is 2MB');
 
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-    if (!serviceKey) throw new InternalServerErrorException('Storage not configured');
+
+    // --- Local Storage Fallback if Supabase not configured ---
+    if (!serviceKey) {
+      // Fallback to local storage
+      const uploadDir = path.join(process.cwd(), 'uploads', 'users');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const ext = file.mimetype.includes('png') ? 'png' : 'jpg';
+      const filename = `${userId}-${Date.now()}.${ext}`;
+      const filePath = path.join(uploadDir, filename);
+
+      fs.writeFileSync(filePath, file.buffer);
+
+      // Assuming API is running on localhost:3002 or whatever configured
+      // We can use a relative URL if on same domain, or absolute.
+      // The static assets are served at /uploads/
+      // Let's assume absolute for safety if frontend is on different port
+      const port = process.env.PORT || 3002;
+      // We can just construct a path that the frontend can use if it proxies, 
+      // but typically full URL is better for DB storage.
+      // However, we don't know the public hostname easily.
+      // Let's use a protocol-relative or just /api if we have reverse proxy? No.
+      // Let's hardcode localhost for dev fallback.
+      const publicUrl = `http://localhost:${port}/uploads/users/${filename}`;
+
+      const updated = await this.prisma.user.update({
+        where: { id: userId },
+        data: { photoUrl: publicUrl },
+        select: { id: true, photoUrl: true },
+      });
+      return { photoUrl: updated.photoUrl };
+    }
+
     const jwksUrl = process.env.SUPABASE_JWKS_URL || '';
     const url = new URL(jwksUrl || '');
     if (!url.origin) throw new InternalServerErrorException('Supabase base URL not configured');
@@ -203,12 +367,12 @@ export class UsersService {
   async adminSearchUsers(q: string, take = 20) {
     const where: any = q
       ? {
-          OR: [
-            { name: { contains: q, mode: 'insensitive' } },
-            { phone: { contains: q, mode: 'insensitive' } },
-            { memberId: { contains: q, mode: 'insensitive' } },
-          ],
-        }
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { phone: { contains: q, mode: 'insensitive' } },
+          { memberId: { contains: q, mode: 'insensitive' } },
+        ],
+      }
       : {};
     return this.prisma.user.findMany({ where, take, orderBy: { id: 'desc' }, select: { id: true, name: true, phone: true, role: true, memberId: true } });
   }
