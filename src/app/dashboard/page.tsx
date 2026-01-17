@@ -61,6 +61,53 @@ interface DashboardRecruitsListItem {
 // --- Components ---
 import ImageCropperModal from '../../components/ImageCropperModal';
 
+const SecureImage = ({ src, alt, className }: { src: string | null, alt: string, className: string }) => {
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
+  const blobUrlRef = React.useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!src) return;
+
+    // If it's a social login image (Google/FB) or Supabase Storage (http), and NOT ngrok, just use it.
+    if (src.startsWith('http') && !src.includes('ngrok')) {
+      setImgSrc(src);
+      return;
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+    const fullUrl = src.startsWith('http') ? src : `${baseUrl}${src}`;
+
+    let active = true;
+    // Fetch with header to bypass ngrok warning
+    fetch(fullUrl, { headers: { 'ngrok-skip-browser-warning': 'true' } })
+      .then(res => {
+        if (!res.ok) throw new Error('Fetch failed');
+        return res.blob();
+      })
+      .then(blob => {
+        if (active) {
+          const url = URL.createObjectURL(blob);
+          blobUrlRef.current = url;
+          setImgSrc(url);
+        }
+      })
+      .catch(() => {
+        if (active) setImgSrc(fullUrl);
+      });
+
+    return () => {
+      active = false;
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+    };
+  }, [src]);
+
+  if (!imgSrc) return <div className={`${className} bg-gray-200 animate-pulse`} />;
+  return <img src={imgSrc} alt={alt} className={className} />;
+};
+
 interface MemberIdCardProps {
   summary: DashboardUserSummary | null;
   loading: boolean;
@@ -181,8 +228,8 @@ const MemberIdCard = ({ summary, loading, onPhotoUpdate }: MemberIdCardProps) =>
         {loading ? (
           <div className="w-full h-full bg-gray-200 animate-pulse" />
         ) : summary?.user?.photoUrl ? (
-          <img
-            src={summary.user.photoUrl.startsWith('http') ? summary.user.photoUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${summary.user.photoUrl}`}
+          <SecureImage
+            src={summary.user.photoUrl}
             alt={displayName}
             className="w-full h-full object-cover object-top"
           />
@@ -412,8 +459,8 @@ const RecruitsPanel = ({ summary, progress, recruits, loading }: RecruitsPanelPr
           {recruits.map((recruit) => (
             <div key={recruit.id} className="flex items-center gap-[12px] w-[172px] h-[44px]">
               {recruit.photoUrl ? (
-                <img
-                  src={recruit.photoUrl.startsWith('http') ? recruit.photoUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${recruit.photoUrl}`}
+                <SecureImage
+                  src={recruit.photoUrl}
                   alt={recruit.name}
                   className="w-[44px] h-[44px] rounded-[8px] object-cover bg-gray-100 shrink-0"
                 />

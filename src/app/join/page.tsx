@@ -370,7 +370,7 @@ const JoinPageContent = () => {
     mobile: '',
     password: '',
     referralCode: '',
-    state: '',
+    state: 'Rajasthan',
     loksabhaId: '',
     vidhansabhaId: '',
     localUnitId: '',
@@ -417,7 +417,7 @@ const JoinPageContent = () => {
       mobile: '',
       password: '',
       referralCode: urlRefCode, // Set from URL
-      state: '',
+      state: 'Rajasthan',
       loksabhaId: '',
       vidhansabhaId: '',
       localUnitId: '',
@@ -857,27 +857,11 @@ const JoinPageContent = () => {
                     <div className="relative flex-1 h-full">
                       <select
                         value={formData.state}
-                        onChange={(e) => {
-                          setFormData({
-                            ...formData,
-                            state: e.target.value,
-                            loksabhaId: '',
-                            vidhansabhaId: '',
-                            localUnitId: ''
-                          });
-                          setVidhansabhas([]);
-                          setLocalUnits([]);
-                        }}
-                        className="appearance-none w-full h-full rounded-[8px] border border-[#E4F2EA] px-[16px] py-[12px] font-semibold tracking-[-0.3px] text-[16px] bg-white text-[#587E67] outline-none cursor-pointer font-['Familjen_Grotesk']"
+                        disabled={true}
+                        className="appearance-none w-full h-full rounded-[8px] border border-[#E4F2EA] px-[16px] py-[12px] font-semibold tracking-[-0.3px] text-[16px] bg-gray-50 text-[#587E67] outline-none cursor-not-allowed font-['Familjen_Grotesk']"
                       >
-                        <option value="">{t.joinPage.form.state}</option>
-                        {Object.keys(STATE_LOKSABHA_MAP).sort().map((s) => (
-                          <option key={s} value={s}>{getTranslation(s, language)}</option>
-                        ))}
+                        <option value="Rajasthan">Rajasthan</option>
                       </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#587E67]">
-                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                      </div>
                     </div>
 
                     <div className="relative flex-1 h-full">
@@ -944,14 +928,7 @@ const JoinPageContent = () => {
                   </div>
 
                   {/* 7. ZIP */}
-                  <input
-                    type="text"
-                    value={formData.zip}
-                    onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
-                    className="w-full h-[46px] rounded-[8px] border border-[#E4F2EA] px-[16px] py-[12px] font-semibold tracking-[-0.3px] text-[16px] placeholder-[#587E67] text-[#04330B] focus:outline-none focus:ring-1 focus:ring-green-600 outline-none font-['Familjen_Grotesk'] "
-                    placeholder={t.joinPage.form.zip}
-                    autoComplete="off"
-                  />
+                  {/* ZIP Code Removed */}
                 </div>
 
                 {/* --- CHECKBOX SECTION FIXED --- */}
