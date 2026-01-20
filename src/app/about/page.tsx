@@ -661,5 +661,6 @@ export default function AboutPage() {
     }}>
       <AboutPageContent />
     </LanguageContext.Provider>
+    // End of About Page Component
   );
 }
