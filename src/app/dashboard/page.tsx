@@ -13,7 +13,8 @@ import {
   User,
   Menu,
   Share2,
-  Trash2
+  Trash2,
+  Check
 } from 'lucide-react';
 import { Navbar } from '../../components/Navbar';
 import { Footer } from '../../components/Footer';
@@ -351,13 +352,15 @@ interface RecruitsPanelProps {
 const RecruitsPanel = ({ summary, progress, recruits, loading }: RecruitsPanelProps) => {
   const { t, language } = useLanguage();
   const currentLang = language as 'en' | 'hi';
+  const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       const code = summary?.user?.referralCode || '';
       if (code) {
         navigator.clipboard.writeText(code);
-        alert('Referral code copied!');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       }
     }
   };
@@ -410,12 +413,17 @@ const RecruitsPanel = ({ summary, progress, recruits, loading }: RecruitsPanelPr
             <span className="text-[#04330B] font-bold font-['Familjen_Grotesk'] text-[16px]">{referralCode}</span>
 
             {/* Copy Button */}
+            {/* Copy Button */}
             <button
               onClick={handleCopy}
-              className="cursor-pointer hover:opacity-80 transition-opacity ml-2"
-              title={t.dashboard.copy}
+              className="cursor-pointer hover:opacity-80 transition-opacity ml-2 flex items-center justify-center p-1 rounded-full hover:bg-green-50"
+              title={copied ? "Copied!" : t.dashboard.copy}
             >
-              <img src="/CopiedIcon.svg" alt="Copy" className="w-[18px] h-[18px]" />
+              {copied ? (
+                <Check size={18} className="text-[#0D5229] animate-in zoom-in duration-200" />
+              ) : (
+                <img src="/CopiedIcon.svg" alt="Copy" className="w-[18px] h-[18px]" />
+              )}
             </button>
 
             {/* Share Button */}
